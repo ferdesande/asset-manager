@@ -97,6 +97,7 @@ class ArchitectureTest {
             classes()
                     .that().resideInAPackage(DOMAIN_LAYER + ".port..")
                     .should().beInterfaces()
+                    .orShould().beRecords()
                     .allowEmptyShould(true)
                     .as("All ports should be interfaces")
                     .because("All ports define contracts for use cases");
@@ -106,8 +107,9 @@ class ArchitectureTest {
             noClasses()
                     .that().resideInAPackage(DOMAIN_LAYER + "..")
                     .should().dependOnClassesThat()
-                    .resideOutsideOfPackages(DOMAIN_LAYER + "..", "java..")
+                    .resideOutsideOfPackages(DOMAIN_LAYER + "..", "java..", "lombok")
                     .allowEmptyShould(true)
-                    .as("Domain should have no external dependencies except Java standard library")
+                    .as("Domain should have no external dependencies except Java standard libraries or lombok " +
+                            "to reduce boilerplate")
                     .because("Domain is the core and should not depend on anything");
 }
