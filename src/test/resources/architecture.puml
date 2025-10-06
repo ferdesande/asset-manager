@@ -1,0 +1,44 @@
+@startuml
+'uncomment if graphViz fails
+'!pragma layout smetana
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+hide stereotype
+
+package "Domain" {
+  [Model] <<org.fsg.assetmanager.domain.model..>> as DomainModel
+  package "Port" {
+      [Port In] <<org.fsg.assetmanager.domain.port.in..>> as PortIn
+      [Port Out] <<org.fsg.assetmanager.domain.port.out..>> as PortOut
+  }
+  [Domain Service] <<org.fsg.assetmanager.domain.service..>> as DomainService
+}
+
+package "Application" {
+  [Application Service] <<org.fsg.assetmanager.application..>> as AppService
+}
+
+package "Infrastructure" {
+  package "Adapter" {
+      [Adapter In] <<org.fsg.assetmanager.infrastructure.adapter.in..>> as AdapterIn
+      [Adapter Out] <<org.fsg.assetmanager.infrastructure.adapter.out..>> as AdapterOut
+  }
+  [Config] <<org.fsg.assetmanager.infrastructure.config..>> as Config
+}
+
+' Domain internal dependencies
+DomainModel <-- PortIn : uses
+DomainModel <-- PortOut : uses
+DomainModel <-- DomainService
+
+' Application layer
+PortIn <-- AppService
+PortOut <-- AppService
+DomainModel <-- AppService
+
+' Infrastructure layer
+PortIn <-- AdapterIn
+PortOut <-- AdapterOut
+DomainService <-- Config : creates bean
+
+@enduml
