@@ -2,6 +2,7 @@ package org.fsg.assetmanager.application;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import org.fsg.assetmanager.domain.model.Asset;
 import org.fsg.assetmanager.domain.model.AssetId;
 import org.fsg.assetmanager.domain.model.AssetStatus;
@@ -16,6 +17,7 @@ import org.fsg.assetmanager.domain.port.out.AssetSearchCriteria;
 import org.fsg.assetmanager.domain.port.out.PublishedUrl;
 import org.fsg.assetmanager.domain.service.AssetValidator;
 import org.fsg.assetmanager.testutils.LogAppender;
+import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -146,14 +148,8 @@ class AssetServiceTest {
             assertThat(
                     logAppender.getEvents(),
                     contains(
-                            hasFormattedLog(
-                                    Level.INFO,
-                                    String.format("Asset info stored locally with ID '%s', filename: '%s'",
-                                            SAMPLE_ASSET_ID, AssetMother.SAMPLE_FILENAME.value())),
-                            hasFormattedLog(
-                                    Level.INFO,
-                                    String.format("Asset with ID '%s' was published successfully with url '%s'",
-                                            SAMPLE_ASSET_ID, SAMPLE_URL)),
+                            assertLogCreatedForMetadataWasSavedLocally(),
+                            assertLogCreatedForAssetWasPublished(),
                             hasFormattedLog(
                                     Level.INFO,
                                     String.format("Asset with ID '%s' was marked as published", SAMPLE_ASSET_ID))
@@ -231,10 +227,7 @@ class AssetServiceTest {
             assertThat(
                     logAppender.getEvents(),
                     contains(
-                            hasFormattedLog(
-                                    Level.INFO,
-                                    String.format("Asset info stored locally with ID '%s', filename: '%s'",
-                                            SAMPLE_ASSET_ID, AssetMother.SAMPLE_FILENAME.value())),
+                            assertLogCreatedForMetadataWasSavedLocally(),
                             hasFormattedLog(
                                     Level.ERROR,
                                     String.format("Asset with ID '%s' failed to publish: %s",
@@ -271,20 +264,24 @@ class AssetServiceTest {
             assertThat(
                     logAppender.getEvents(),
                     contains(
-                            hasFormattedLog(
-                                    Level.INFO,
-                                    String.format("Asset info stored locally with ID '%s', filename: '%s'",
-                                            SAMPLE_ASSET_ID, AssetMother.SAMPLE_FILENAME.value())),
-                            hasFormattedLog(
-                                    Level.INFO,
-                                    String.format("Asset with ID '%s' was published successfully with url '%s'",
-                                            SAMPLE_ASSET_ID, SAMPLE_URL)),
+                            assertLogCreatedForMetadataWasSavedLocally(),
+                            assertLogCreatedForAssetWasPublished(),
                             hasFormattedLog(
                                     Level.ERROR,
-                                    String.format(
-                                            "CRITICAL: Asset with ID '%s' was published but failed to update metadata",
-                                            SAMPLE_ASSET_ID))
+                                    String.format("CRITICAL: Asset with ID '%s' was published but failed " +
+                                            "to update metadata: %s", SAMPLE_ASSET_ID, exceptionMessage))
                     ));
+        }
+
+        private Matcher<ILoggingEvent> assertLogCreatedForMetadataWasSavedLocally() {
+            return hasFormattedLog(Level.INFO,
+                    String.format("Asset info stored locally with ID '%s', filename: '%s'",
+                            SAMPLE_ASSET_ID, AssetMother.SAMPLE_FILENAME.value()));
+        }
+
+        private Matcher<ILoggingEvent> assertLogCreatedForAssetWasPublished() {
+            return hasFormattedLog(Level.INFO, String.format(
+                    "Asset with ID '%s' was published successfully with url '%s'", SAMPLE_ASSET_ID, SAMPLE_URL));
         }
 
         private void assertSavedAssets(

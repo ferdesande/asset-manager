@@ -57,21 +57,31 @@ public class AssetService implements UploadAssetUseCase, SearchAssetsUseCase {
 
     @Async
     void uploadAsync(Asset asset, byte[] fileContent) {
-        PublishedUrl published;
+        PublishedUrl published = publishAsset(asset, fileContent);
+        if (published != null) {
+            markAssetAsPublished(asset, published);
+        }
+    }
+
+    private PublishedUrl publishAsset(Asset asset, byte[] fileContent) {
         try {
-            published = assetPublisher.publish(asset, fileContent);
+            PublishedUrl published = assetPublisher.publish(asset, fileContent);
             log.info("Asset with ID '{}' was published successfully with url '{}'", asset.id(), published.url());
+            return published;
         } catch (Exception e) {
             assetRepository.save(asset.markAsFailed());
             log.error("Asset with ID '{}' failed to publish: {}", asset.id(), e.getMessage(), e);
-            return;
+            return null;
         }
+    }
 
+    private void markAssetAsPublished(Asset asset, PublishedUrl published) {
         try {
             assetRepository.save(asset.markAsPublished(published.url()));
             log.info("Asset with ID '{}' was marked as published", asset.id());
         } catch (Exception e) {
-            log.error("CRITICAL: Asset with ID '{}' was published but failed to update metadata", asset.id());
+            log.error("CRITICAL: Asset with ID '{}' was published but failed to update metadata: {}",
+                    asset.id(), e.getMessage(), e);
         }
     }
 }
