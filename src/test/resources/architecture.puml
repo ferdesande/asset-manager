@@ -35,6 +35,7 @@ DomainModel <-- DomainService
 PortIn <-- AppService
 PortOut <-- AppService
 DomainModel <-- AppService
+DomainService <-- AppService: uses
 
 ' Infrastructure layer
 PortIn <-- AdapterIn
