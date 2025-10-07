@@ -1,37 +1,26 @@
 package org.fsg.assetmanager.domain.model;
 
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.time.Instant;
-import java.util.UUID;
 
-@Getter
-@Builder
-public class Asset {
-    private final AssetId id;
-    private final Filename filename;
-    private final ContentType contentType;
-    private final FileSize fileSize;
-    private final Instant uploadDate;
+public record Asset(
+        AssetId id,
+        Filename filename,
+        ContentType contentType,
+        FileSize fileSize,
+        Instant uploadDate,
+        AssetStatus status,
+        String publishedUrl
+) {
 
-    @Setter(AccessLevel.PRIVATE)
-    private AssetStatus status;
+    public Asset markAsPublished(String publishedUrl) {
+        return copy(AssetStatus.PUBLISHED, publishedUrl);
+    }
 
-    @Setter(AccessLevel.PRIVATE)
-    private String publishedUrl;
+    public Asset markAsFailed() {
+        return copy(AssetStatus.FAILED, null);
+    }
 
-    public static Asset create(Filename filename, ContentType contentType, FileSize fileSize) {
-        return Asset.builder()
-                .id(new AssetId(UUID.randomUUID().toString()))
-                .filename(filename)
-                .contentType(contentType)
-                .fileSize(fileSize)
-                .uploadDate(Instant.now())
-                .status(AssetStatus.PENDING)
-                .publishedUrl(null)
-                .build();
+    private Asset copy(AssetStatus updatedStatus, String updatedPublishedUrl) {
+        return new Asset(id, filename, contentType, fileSize, uploadDate, updatedStatus, updatedPublishedUrl);
     }
 }

@@ -99,17 +99,17 @@ class ArchitectureTest {
                     .should().beInterfaces()
                     .orShould().beRecords()
                     .allowEmptyShould(true)
-                    .as("All ports should be interfaces")
-                    .because("All ports define contracts for use cases");
+                    .as("All ports should be interfaces (use cases, repositories) or records (DTOs)")
+                    .because("All ports must define contracts and DTOs");
 
     @ArchTest
     static final ArchRule domainShouldBeIndependent =
             noClasses()
                     .that().resideInAPackage(DOMAIN_LAYER + "..")
                     .should().dependOnClassesThat()
-                    .resideOutsideOfPackages(DOMAIN_LAYER + "..", "java..", "lombok")
+                    .resideOutsideOfPackages(DOMAIN_LAYER + "..", "java..", "lombok..")
                     .allowEmptyShould(true)
-                    .as("Domain should have no external dependencies except Java standard libraries or lombok " +
-                            "to reduce boilerplate")
+                    .as("Domain should have no external dependencies except Java standard libraries and lombok to " +
+                            "reduce boilerplate")
                     .because("Domain is the core and should not depend on anything");
 }
