@@ -9,6 +9,7 @@ import org.fsg.assetmanager.domain.port.out.AssetRepository;
 import org.fsg.assetmanager.domain.port.out.AssetSearchCriteria;
 import org.fsg.assetmanager.domain.port.out.PublishedUrl;
 import org.fsg.assetmanager.domain.service.AssetValidator;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.util.IdGenerator;
 
@@ -20,6 +21,11 @@ import java.util.List;
 @SuppressWarnings("ClassCanBeRecord")
 public class AssetService implements UploadAssetUseCase, SearchAssetsUseCase {
 
+    // Hint: An instant of the self object is required in order to use Virtual Threads (VTs).
+    //       If a method annotated with @Sync is called within the same class, is executed by the main thread
+    //       instead of by a VT. Calling it like this fix the problem. We prefer to use @Asyn because it integrates
+    //       with Spring much better.
+    private final ObjectProvider<AssetService> selfProvider;
     private final AssetValidator assetValidator;
     private final AssetRepository assetRepository;
     private final AssetPublisher assetPublisher;
@@ -40,7 +46,7 @@ public class AssetService implements UploadAssetUseCase, SearchAssetsUseCase {
         Asset savedAsset = assetRepository.save(asset);
         log.info("Asset info stored locally with ID '{}', filename: '{}'", asset.id(), asset.filename().value());
 
-        uploadAsync(savedAsset, command.bytes());
+        selfProvider.getObject().uploadAsync(savedAsset, command.bytes());
         return new AssetUploadResult(savedAsset.id());
     }
 

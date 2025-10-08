@@ -22,11 +22,11 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.OngoingStubbing;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.util.IdGenerator;
 
 import java.time.Clock;
@@ -74,13 +74,18 @@ class AssetServiceTest {
     @Mock
     private IdGenerator idGenerator;
 
-    @InjectMocks
+    @Mock
+    ObjectProvider<AssetService> selfProvider;
+
     private AssetService service;
 
     @BeforeEach
     void setUp() {
         logger.addAppender(logAppender);
         logAppender.start();
+
+        service = new AssetService(selfProvider, validator, repository, publisher, clock, idGenerator);
+        lenient().when(selfProvider.getObject()).thenReturn(service);
     }
 
     @AfterEach

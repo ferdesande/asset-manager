@@ -80,3 +80,97 @@ For a proxy system with simple upload → save metadata flow, these scenarios do
 
 **Outcome**: Virtual Threads deliver the required async performance with maintainable imperative code. 
 The hexagonal architecture allows migrating to WebFlux if reactive requirements emerge.
+
+## 3. Async Method Invocation with Self-Reference
+
+**Decision**
+
+Use ``ObjectProvider<AssetService>`` for self referencing when calling ``@Async`` methods within the same class.
+
+**Context**
+
+Spring's ``@Async`` annotation uses AOP proxies to execute methods asynchronously. A common pitfall is 
+**self-invocation** when a method calls another ``@Async`` method in the same class, the proxy is bypassed and the
+call is executed synchronously.
+
+```java
+import org.springframework.scheduling.annotation.Async;
+
+// ❌ This does not work
+public class FooService {
+    public void doSomething() {
+        // previous code
+        doSomethingAsync();
+    }
+
+    @Async
+    public void doSomethingAsync(){
+        // Executes in the SAME thread (Synchronously)
+    }
+}
+```
+
+**Solution**
+
+We decided to use self-injection with ``ObjectProvider<>``. It must be done in the following way if a 
+config class is used to create beans.
+
+```java
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+
+@Configuration
+public class FooConfig {
+    @Bean
+    public FooService fooService(
+            // other dependencies 
+            @Lazy ObjectProvider<FooService> selfProvider
+            ) {
+        return new FooService(/*other dependencies ,*/ selfProvider);
+    }
+}
+
+public class FooService {
+    private final ObjectProvider<FooService> selfProvider;
+    
+    public void doSomething() {
+        // previous code
+        selfProvider.getObject().doSomethingAsync();
+    }
+
+    @Async
+    public void doSomethingAsync(){
+        // Now is executed in a Virtual Thread.
+    }
+}
+```
+
+**Rationale**
+1. **Compatible with manual bean creation**: Works with ``@Bean`` and ``@Configuration``
+2. **Explicit**: The self-reference is visible in the constructor signature
+3. **Lazy loading**: Avoids circular dependencies
+4. **Standard Spring Pattern**: ``ObjectProvider<>`` is the recommended Spring approach for optional/lazy dependencies.
+
+**Trade-offs**
+- **Verbosity**: ``selfProvider.getObject().doSomethingAsync();`` is worse than just ``this.doSomethingAsync();``
+
+**Alternatives considered**
+
+In the case of the ``AssetService`` other alternatives were considered.
+
+1. **Self-injection with ``@Lazy``**: Inject the bean directly in the service with ``@Lazy``.
+- Pros: Simple annotation
+- Cons: Does not work when you want to isolate application and domain layers from the framework
+2. **Separated class**: Extract the async logic into another class
+- Pros: Does not need self-injection
+- Cons: Additional class, spread Asset storage through different classes.
+
+**Test implications**
+
+In **Unit testing** (tests annotated with ``@ExtendWith(MockitoExtension.class``) the ``ObjectProvider<>`` 
+must be mocked everywhere and the annotation ``@InjectMocks`` cannot be used.
+
+In **Integration testing** (tests annotated with ``@SpringBootTest``) the Spring context handles the self-reference
+automatically.

@@ -32,14 +32,24 @@ DomainModel <-- PortOut : uses
 DomainModel <-- DomainService
 
 ' Application layer
-PortIn <-- AppService
-PortOut <-- AppService
-DomainModel <-- AppService
-DomainService <-- AppService: uses
+PortIn <-[hidden]- AppService
+PortOut <-[hidden]- AppService
+DomainModel <-[hidden]- AppService
+DomainService <-[hidden]- AppService: uses
+
+' real connections are hidden. This is only simplifies diagram for visualization
+Domain <-- AppService
 
 ' Infrastructure layer
 PortIn <-- AdapterIn
 PortOut <-- AdapterOut
 DomainService <-- Config : creates bean
-
+AppService <-- Config : creates bean
+' Final (uncomment)
+'PortIn <.. Config
+'PortOut <.. Config
+' Temporary
+PortIn <-[hidden]- Config
+PortOut <-[hidden]- Config
+DomainModel <-[hidden]- Config
 @enduml
