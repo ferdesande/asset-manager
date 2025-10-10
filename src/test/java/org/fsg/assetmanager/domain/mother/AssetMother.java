@@ -9,8 +9,8 @@ import java.time.ZoneOffset;
 public class AssetMother {
     private static final String STORAGE_SERVER = "https//my-personal-storage/";
 
-    public static final AssetId SAMPLE_ASSET_ID = new AssetId("asset-1");
-    public static final AssetId ANOTHER_ASSET_ID = new AssetId("asset-2");
+    public static final AssetId SAMPLE_ASSET_ID = new AssetId("00000000-0000-0000-0000-000000000001");
+    public static final AssetId ANOTHER_ASSET_ID = new AssetId("00000000-0000-0000-0000-000000000002");
 
     public static final Filename SAMPLE_FILENAME = new Filename("sample filename");
     public static final Filename ANOTHER_FILENAME = new Filename("another filename");

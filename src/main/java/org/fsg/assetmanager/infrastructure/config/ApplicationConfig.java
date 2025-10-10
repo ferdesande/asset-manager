@@ -36,22 +36,6 @@ public class ApplicationConfig {
     }
 
     @Bean
-    public AssetRepository assetRepository() {
-        // TODO: Must be replaced
-        return new AssetRepository() {
-            @Override
-            public Asset save(Asset asset) {
-                return asset;
-            }
-
-            @Override
-            public List<Asset> find(AssetSearchCriteria criteria) {
-                return List.of();
-            }
-        };
-    }
-
-    @Bean
     public AssetPublisher assetPublisher() {
         // TODO: Must be replaced
         return (asset, content) -> new PublishedUrl("123");

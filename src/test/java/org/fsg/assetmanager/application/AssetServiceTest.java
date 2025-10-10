@@ -4,7 +4,6 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import org.fsg.assetmanager.domain.model.Asset;
-import org.fsg.assetmanager.domain.model.AssetId;
 import org.fsg.assetmanager.domain.model.AssetStatus;
 import org.fsg.assetmanager.domain.model.SortDirection;
 import org.fsg.assetmanager.domain.mother.AssetMother;
@@ -46,8 +45,6 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class AssetServiceTest {
     private static final String SAMPLE_URL = "url-to-an-asset";
-    private static final UUID SAMPLE_UUID = UUID.fromString("00000000-0000-0000-0000-000000000001");
-    private static final AssetId SAMPLE_ASSET_ID = new AssetId(SAMPLE_UUID.toString());
     private static final AssetSearchQuery ASSET_SEARCH_QUERY = new AssetSearchQuery(SortDirection.ASC);
     private static final AssetUploadCommand ASSET_UPLOAD_COMMAND = new AssetUploadCommand(
             AssetMother.SAMPLE_FILENAME.value(),
@@ -141,7 +138,7 @@ class AssetServiceTest {
             AssetUploadResult result = service.upload(ASSET_UPLOAD_COMMAND);
 
             // Then
-            assertThat(result.assetId(), equalTo(SAMPLE_ASSET_ID));
+            assertThat(result.assetId(), equalTo(AssetMother.SAMPLE_ASSET_ID));
 
             ArgumentCaptor<Asset> captor = ArgumentCaptor.forClass(Asset.class);
             verify(repository, times(2)).save(captor.capture());
@@ -157,7 +154,8 @@ class AssetServiceTest {
                             assertLogCreatedForAssetWasPublished(),
                             hasFormattedLog(
                                     Level.INFO,
-                                    String.format("Asset with ID '%s' was marked as published", SAMPLE_ASSET_ID))
+                                    String.format("Asset with ID '%s' was marked as published",
+                                            AssetMother.SAMPLE_ASSET_ID))
                     ));
         }
 
@@ -220,7 +218,7 @@ class AssetServiceTest {
             AssetUploadResult result = service.upload(ASSET_UPLOAD_COMMAND);
 
             // Then
-            assertThat(result.assetId(), equalTo(SAMPLE_ASSET_ID));
+            assertThat(result.assetId(), equalTo(AssetMother.SAMPLE_ASSET_ID));
 
             ArgumentCaptor<Asset> captor = ArgumentCaptor.forClass(Asset.class);
             verify(repository, times(2)).save(captor.capture());
@@ -236,7 +234,7 @@ class AssetServiceTest {
                             hasFormattedLog(
                                     Level.ERROR,
                                     String.format("Asset with ID '%s' failed to publish: %s",
-                                            SAMPLE_ASSET_ID, exceptionMessage))
+                                            AssetMother.SAMPLE_ASSET_ID, exceptionMessage))
                     ));
         }
 
@@ -259,7 +257,7 @@ class AssetServiceTest {
             AssetUploadResult result = service.upload(ASSET_UPLOAD_COMMAND);
 
             // Then
-            assertThat(result.assetId(), equalTo(SAMPLE_ASSET_ID));
+            assertThat(result.assetId(), equalTo(AssetMother.SAMPLE_ASSET_ID));
 
             ArgumentCaptor<Asset> captor = ArgumentCaptor.forClass(Asset.class);
             verify(repository, times(2)).save(captor.capture());
@@ -274,19 +272,20 @@ class AssetServiceTest {
                             hasFormattedLog(
                                     Level.ERROR,
                                     String.format("CRITICAL: Asset with ID '%s' was published but failed " +
-                                            "to update metadata: %s", SAMPLE_ASSET_ID, exceptionMessage))
+                                            "to update metadata: %s", AssetMother.SAMPLE_ASSET_ID, exceptionMessage))
                     ));
         }
 
         private Matcher<ILoggingEvent> assertLogCreatedForMetadataWasSavedLocally() {
             return hasFormattedLog(Level.INFO,
                     String.format("Asset info stored locally with ID '%s', filename: '%s'",
-                            SAMPLE_ASSET_ID, AssetMother.SAMPLE_FILENAME.value()));
+                            AssetMother.SAMPLE_ASSET_ID, AssetMother.SAMPLE_FILENAME.value()));
         }
 
         private Matcher<ILoggingEvent> assertLogCreatedForAssetWasPublished() {
-            return hasFormattedLog(Level.INFO, String.format(
-                    "Asset with ID '%s' was published successfully with url '%s'", SAMPLE_ASSET_ID, SAMPLE_URL));
+            return hasFormattedLog(Level.INFO,
+                    String.format("Asset with ID '%s' was published successfully with url '%s'",
+                            AssetMother.SAMPLE_ASSET_ID, SAMPLE_URL));
         }
 
         private void assertSavedAssets(
@@ -297,7 +296,7 @@ class AssetServiceTest {
             Asset firstSaving = allValues.get(0);
             Asset secondSaving = allValues.get(1);
 
-            assertThat(firstSaving.id(), equalTo(SAMPLE_ASSET_ID));
+            assertThat(firstSaving.id(), equalTo(AssetMother.SAMPLE_ASSET_ID));
             assertThat(firstSaving.filename().value(), equalTo(ASSET_UPLOAD_COMMAND.filename()));
             assertThat(firstSaving.contentType().value(), equalTo(ASSET_UPLOAD_COMMAND.contentType()));
             assertThat(firstSaving.fileSize().value(), equalTo(ASSET_UPLOAD_COMMAND.size()));
@@ -305,7 +304,7 @@ class AssetServiceTest {
             assertThat(firstSaving.publishedUrl(), nullValue());
             assertThat(firstSaving.status(), equalTo(AssetStatus.PENDING));
 
-            assertThat(secondSaving.id(), equalTo(SAMPLE_ASSET_ID));
+            assertThat(secondSaving.id(), equalTo(AssetMother.SAMPLE_ASSET_ID));
             assertThat(secondSaving.filename().value(), equalTo(ASSET_UPLOAD_COMMAND.filename()));
             assertThat(secondSaving.contentType().value(), equalTo(ASSET_UPLOAD_COMMAND.contentType()));
             assertThat(secondSaving.fileSize().value(), equalTo(ASSET_UPLOAD_COMMAND.size()));
@@ -316,7 +315,8 @@ class AssetServiceTest {
     }
 
     private void configureSearchAssets(Asset... assets) {
-        AssetSearchCriteria criteria = new AssetSearchCriteria(ASSET_SEARCH_QUERY.sortDirection());
+        AssetSearchCriteria criteria = new AssetSearchCriteria(null, null, null, null,
+                ASSET_SEARCH_QUERY.sortDirection());
         when(repository.find(criteria)).thenReturn(Arrays.asList(assets));
     }
 
@@ -329,7 +329,7 @@ class AssetServiceTest {
     }
 
     private void configureIdGenerator() {
-        when(idGenerator.generateId()).thenReturn(SAMPLE_UUID);
+        when(idGenerator.generateId()).thenReturn(UUID.fromString(AssetMother.SAMPLE_ASSET_ID.value()));
     }
 
     private void configureClock() {

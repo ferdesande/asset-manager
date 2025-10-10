@@ -34,7 +34,7 @@ public class AssetService implements UploadAssetUseCase, SearchAssetsUseCase {
 
     @Override
     public List<Asset> search(AssetSearchQuery query) {
-        AssetSearchCriteria criteria = new AssetSearchCriteria(query.sortDirection());
+        AssetSearchCriteria criteria = new AssetSearchCriteria(null, null, null, null, query.sortDirection());
         return assetRepository.find(criteria);
     }
 

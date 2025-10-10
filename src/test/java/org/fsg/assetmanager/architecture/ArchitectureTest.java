@@ -8,6 +8,8 @@ import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.GeneralCodingRules;
 import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition;
 import com.tngtech.archunit.library.plantuml.rules.PlantUmlArchCondition;
+import jakarta.persistence.Entity;
+import org.springframework.data.repository.Repository;
 
 import java.util.Objects;
 
@@ -35,7 +37,6 @@ class ArchitectureTest {
                         Objects.requireNonNull(plantUmlDiagram, PACKAGES_ARCH_FILE + " not found in resources"),
                         PlantUmlArchCondition.Configuration.consideringOnlyDependenciesInAnyPackage(PROJECT_ROOT + "..")
                 ))
-                .allowEmptyShould(true)
                 .as("Architecture should adhere to PlantUML diagram")
                 .check(classes);
     }
@@ -53,7 +54,6 @@ class ArchitectureTest {
                 .matching(PROJECT_ROOT + ".(*)..")
                 .should()
                 .beFreeOfCycles()
-                .allowEmptyShould(true)
                 .as("Architecture should be free of cycles between packages")
                 .check(classes);
     }
@@ -70,25 +70,21 @@ class ArchitectureTest {
                     .because("REST controllers should follow naming convention");
 
     @ArchTest
-    static final ArchRule springRepositorioesShouldBeSuffixed =
+    static final ArchRule springRepositoriesShouldBeSuffixed =
             classes()
                     .that().resideInAPackage(ADAPTER_OUT + ".persistence..")
                     .and().areInterfaces()
-                    .and().implement("org.springframework.data.repository.Repository")
+                    .and().areAssignableTo(Repository.class)
                     .should().haveSimpleNameEndingWith("Repository")
-                    .orShould().haveSimpleNameEndingWith("Adapter")
-                    .allowEmptyShould(true)
                     .as("Spring data repositories should be suffixed with 'Repository'");
 
     @ArchTest
     static final ArchRule jpaEntitiesShouldBeSuffixed =
             classes()
                     .that().resideInAPackage(ADAPTER_OUT + ".persistence..")
-                    .and().areAnnotatedWith("jakarta.persistence.Entity")
-                    .should().haveSimpleNameEndingWith("Repository")
-                    .orShould().haveSimpleNameEndingWith("Adapter")
-                    .allowEmptyShould(true)
-                    .as("JPA repositories should be suffixed with 'Repository'")
+                    .and().areAnnotatedWith(Entity.class)
+                    .should().haveSimpleNameEndingWith("Entity")
+                    .as("JPA entities should be suffixed with 'Entity'")
                     .because("Persistence adapters should follow naming convention");
 
     // Other rules
@@ -98,7 +94,6 @@ class ArchitectureTest {
                     .that().resideInAPackage(DOMAIN_LAYER + ".port..")
                     .should().beInterfaces()
                     .orShould().beRecords()
-                    .allowEmptyShould(true)
                     .as("All ports should be interfaces (use cases, repositories) or records (DTOs)")
                     .because("All ports must define contracts and DTOs");
 
@@ -108,7 +103,6 @@ class ArchitectureTest {
                     .that().resideInAPackage(DOMAIN_LAYER + "..")
                     .should().dependOnClassesThat()
                     .resideOutsideOfPackages(DOMAIN_LAYER + "..", "java..", "lombok..")
-                    .allowEmptyShould(true)
                     .as("Domain should have no external dependencies except Java standard libraries and lombok to " +
                             "reduce boilerplate")
                     .because("Domain is the core and should not depend on anything");

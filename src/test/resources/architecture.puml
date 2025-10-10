@@ -12,6 +12,7 @@ package "Domain" {
       [Port Out] <<org.fsg.assetmanager.domain.port.out..>> as PortOut
   }
   [Domain Service] <<org.fsg.assetmanager.domain.service..>> as DomainService
+  [Domain Exception] <<org.fsg.assetmanager.domain.exception..>> as DomainException
 }
 
 package "Application" {
@@ -30,6 +31,7 @@ package "Infrastructure" {
 DomainModel <-- PortIn : uses
 DomainModel <-- PortOut : uses
 DomainModel <-- DomainService
+DomainModel <-- DomainException
 
 ' Application layer
 PortIn <-[hidden]- AppService
@@ -43,6 +45,8 @@ Domain <-- AppService
 ' Infrastructure layer
 PortIn <-- AdapterIn
 PortOut <-- AdapterOut
+DomainModel <-[hidden]- AdapterOut
+DomainException <-[hidden]- AdapterOut
 DomainService <-- Config : creates bean
 AppService <-- Config : creates bean
 ' Final (uncomment)

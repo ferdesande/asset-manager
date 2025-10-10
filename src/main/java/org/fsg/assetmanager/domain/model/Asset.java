@@ -1,7 +1,10 @@
 package org.fsg.assetmanager.domain.model;
 
+import lombok.With;
+
 import java.time.Instant;
 
+@With
 public record Asset(
         AssetId id,
         Filename filename,
@@ -13,14 +16,14 @@ public record Asset(
 ) {
 
     public Asset markAsPublished(String publishedUrl) {
-        return copy(AssetStatus.PUBLISHED, publishedUrl);
+        return this
+                .withStatus(AssetStatus.PUBLISHED)
+                .withPublishedUrl(publishedUrl);
     }
 
     public Asset markAsFailed() {
-        return copy(AssetStatus.FAILED, null);
-    }
-
-    private Asset copy(AssetStatus updatedStatus, String updatedPublishedUrl) {
-        return new Asset(id, filename, contentType, fileSize, uploadDate, updatedStatus, updatedPublishedUrl);
+        return this
+                .withStatus(AssetStatus.FAILED)
+                .withPublishedUrl(null);
     }
 }
